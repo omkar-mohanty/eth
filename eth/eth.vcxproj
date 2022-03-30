@@ -18,16 +18,10 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="rpc.ixx" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="Module.ixx" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{3a88d120-ae7a-4cff-827a-0cffe55377fd}</ProjectGuid>
+    <ProjectGuid>{730afd60-f730-4f75-b5bf-9ac4f5388790}</ProjectGuid>
     <RootNamespace>eth</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
@@ -145,6 +139,13 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="ETH.ixx" />
+    <ClCompile Include="ETH.RPC-IRPC.ixx" />
+    <ClCompile Include="ETH.Types-IBlockInformation.ixx" />
+    <ClCompile Include="ETH.Types.ixx" />
+    <ClCompile Include="Source.cpp" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
