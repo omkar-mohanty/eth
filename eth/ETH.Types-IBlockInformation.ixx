@@ -1,10 +1,8 @@
 export module ETH.Types:IBlockInformation;
 export namespace ETH::Types {
-	class IBlockInformation
+	struct BlockInformation
 	{
-	public:
-
-		virtual ~IBlockInformation();
+	
 	};
 
 }

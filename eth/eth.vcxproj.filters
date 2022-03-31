@@ -27,14 +27,17 @@
     <ClCompile Include="ETH.Types-IBlockInformation.ixx">
       <Filter>Source Files\Types</Filter>
     </ClCompile>
-    <ClCompile Include="ETH.RPC-IRPC.ixx">
-      <Filter>Source Files\RPC</Filter>
-    </ClCompile>
     <ClCompile Include="ETH.Types.ixx">
       <Filter>Source Files\Types</Filter>
     </ClCompile>
     <ClCompile Include="Source.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ETH.RPC.ixx">
+      <Filter>Source Files\RPC</Filter>
+    </ClCompile>
+    <ClCompile Include="ETH.RPC-RPC.ixx">
+      <Filter>Source Files\RPC</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

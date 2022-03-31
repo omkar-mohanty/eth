@@ -1,2 +1,2 @@
 export module ETH.RPC;
-export import :IRPC;
+export import :ImplRPC;

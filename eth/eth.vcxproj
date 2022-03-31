@@ -141,7 +141,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ETH.ixx" />
-    <ClCompile Include="ETH.RPC-IRPC.ixx" />
+    <ClCompile Include="ETH.RPC-RPC.ixx" />
+    <ClCompile Include="ETH.RPC.ixx" />
     <ClCompile Include="ETH.Types-IBlockInformation.ixx" />
     <ClCompile Include="ETH.Types.ixx" />
     <ClCompile Include="Source.cpp" />
