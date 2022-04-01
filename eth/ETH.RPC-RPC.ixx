@@ -6,37 +6,67 @@ module;
 #include<boost/asio/ip/tcp.hpp>
 #include<boost/json.hpp>
 #include<iostream>
+#include<utility>
 #include<memory>
 #include<string>
+
+
+
 export module ETH.RPC:ImplRPC;
 import ETH.Types;
 
+namespace net = boost::asio;
+namespace beast = boost::beast;
+namespace http = beast::http;
+namespace json = boost::json;
+
+
+using tcp = net::ip::tcp;
+using BlockInformation = ETH::Types::BlockInformation;
+
+template<typename ...T>
+json::array prepareParams(T... args) {
+	return json::array{args...};
+}
 
 enum class RPCMethod
 {
-
+	web3_clientVersion,
+	web3_sha3,
+	net_version,
+	net_listening,
+	net_peerCount
 };
 
 export namespace ETH::RPC {
 
 
-	namespace net = boost::asio;
-	namespace beast = boost::beast;
-	namespace http = beast::http;
-	namespace json = boost::json;
-
-	using BlockInformation = ETH::Types::BlockInformation;
-	using tcp = net::ip::tcp;
-
-
 	class RPC{
+
+
 	private:
-	json::object prepareJsonBody();
-	inline std::string to_string(beast::flat_buffer const&);
+	json::object prepareJsonBody(RPCMethod,json::array);
+	constexpr std::string methodToString(RPCMethod);
+	std::string makeRequest(std::string);
+	void connectToServer();
+	std::string prepareBody(RPCMethod, json::array);
+	constexpr int methodId(RPCMethod);
+
 	public:
 		RPC(std::string,std::string);
+
+		//Web3 RPC methods
+		std::string Web3ClientVersion();
+		std::string Web3Sha3(std::string);
+
+		//Net RPC methods
+		std::string NetListening();
+		std::string NetVersion();
+		std::string NetPeerCount();
+
+
 		BlockInformation GetBlockByHash(std::string);
-		std::string ClientVersion();
+
 		~RPC() {}
 	private:
 		std::string ip_address;
@@ -48,47 +78,43 @@ export namespace ETH::RPC {
 	};
 	
 
-	json::object RPC::prepareJsonBody()
+	json::object RPC::prepareJsonBody(RPCMethod method,json::array params)
 	{
 		json::object jsonBody;
 		jsonBody["jsonrpc"] = "2.0";
-		jsonBody["method"] = "web3_clientVersion";
-		jsonBody["params"] = json::array{};
-		jsonBody["id"] = 1;
+		jsonBody["method"] = methodToString(method);
+		jsonBody["params"] = params;
+		jsonBody["id"] = methodId(method);
 		return jsonBody;
 	}
-
-	inline std::string RPC::to_string(beast::flat_buffer const& buffer)
+	
+	constexpr std::string RPC::methodToString(RPCMethod method)
 	{
-		return std::string(boost::asio::buffer_cast<char const*>(
-			beast::buffers_front(buffer.data())),
-			boost::asio::buffer_size(buffer.data()));
+		std::string stringMethod;
+		switch (method)
+		{
+		case RPCMethod::web3_clientVersion:
+			stringMethod = "web3_clientVersion";
+			break;
+		case RPCMethod::web3_sha3:
+			stringMethod = "web3_sha3";
+			break;
+		case RPCMethod::net_listening:
+			stringMethod = "net_listening";
+			break;
+		case RPCMethod::net_peerCount:
+			stringMethod = "net_peerCount";
+			break;
+		default:
+			stringMethod = "web3_clientVersion";
+			break;
+		}
+		return stringMethod;
 	}
 
-	RPC::RPC(std::string ip, std::string port):ip_address{ip},port{port}
+	std::string RPC::makeRequest(std::string serealizedBody)
 	{
-		stream = std::make_unique<beast::tcp_stream>(io_context);
-		resolver = std::make_unique<tcp::resolver>(io_context);
-	}
-
-	BlockInformation RPC::GetBlockByHash(std::string hash)
-	{
-		return BlockInformation();
-	}
-
-	std::string RPC::ClientVersion()
-	{
-		auto const results = resolver->resolve(ip_address, port);
-
-		//connect to the server
-		stream->connect(results);
-
-		//get json body
-		json::object jsonBody = prepareJsonBody();
-		std::string serealizedBody = json::serialize(jsonBody);
-
-		//build request
-		http::request<http::string_body> req{ http::verb::post,port,11};
+		http::request<http::string_body> req{ http::verb::post,port,11 };
 		req.target("/");
 		req.set(beast::http::field::content_type, "application/json");
 		req.body() = serealizedBody;
@@ -102,12 +128,110 @@ export namespace ETH::RPC {
 
 		//container to hold response
 		http::response<http::string_body> res;
-		
+
 		// Receive the HTTP response
 		http::read(*stream.get(), buffer, res);
-		
-		std::string result = res.body();
-		
-		return result;
+
+		return res.body();
+	}
+
+	void RPC::connectToServer()
+	{
+		auto const results = resolver->resolve(ip_address, port);
+
+		//connect to the server
+		stream->connect(results);
+
+	}
+
+	std::string RPC::prepareBody(RPCMethod method, json::array params=json::array{})
+	{
+		//get json body
+		json::object jsonBody = prepareJsonBody(method, params);
+		return json::serialize(jsonBody);
+	}
+
+	constexpr int RPC::methodId(RPCMethod method)
+	{
+		int id;
+		switch (method)
+		{
+		case RPCMethod::web3_clientVersion:
+			id = 1;
+			break;
+		case RPCMethod::web3_sha3:
+			id = 64;
+			break;
+		case RPCMethod::net_version:
+		case RPCMethod::net_listening:
+			id = 67;
+			break;
+		case RPCMethod::net_peerCount:
+			id = 74;
+			break;
+		default:
+			break;
+		}
+		return id;
+	}
+
+	
+
+	RPC::RPC(std::string ip, std::string port):ip_address{ip},port{port}
+	{
+		stream = std::make_unique<beast::tcp_stream>(io_context);
+		resolver = std::make_unique<tcp::resolver>(io_context);
+	}
+
+	BlockInformation RPC::GetBlockByHash(std::string hash)
+	{
+		return BlockInformation();
+	}
+
+	std::string RPC::Web3ClientVersion()
+	{
+		//Establish connection to server
+		connectToServer();
+
+		//prepare params
+
+		std::string serealizedBody = prepareBody(RPCMethod::web3_clientVersion);
+
+		return makeRequest(serealizedBody);
+	}
+	std::string RPC::Web3Sha3(std::string data)
+	{
+		connectToServer();
+
+		json::array params = prepareParams(data);
+
+		std::string serealizedBody = prepareBody(RPCMethod::web3_sha3,params);
+
+		return makeRequest(serealizedBody);
+	}
+	std::string RPC::NetListening()
+	{
+		connectToServer();
+
+		std::string serealizedBody = prepareBody(RPCMethod::net_listening);
+
+		return makeRequest(serealizedBody);
+	}
+	std::string RPC::NetVersion()
+	{
+		connectToServer();
+
+		std::string serealizedBody = prepareBody(RPCMethod::net_version);
+
+		return makeRequest(serealizedBody);
+	}
+	std::string RPC::NetPeerCount()
+	{
+		connectToServer();
+
+		std::string serealizedBody = prepareBody(RPCMethod::net_peerCount);
+
+		return makeRequest(serealizedBody);
 	}
 }
+
