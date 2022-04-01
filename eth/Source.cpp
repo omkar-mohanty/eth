@@ -10,6 +10,8 @@ int main() {
 		std::cout << "Net Version: " << rpc.NetVersion() << "\n";
 		std::cout << "Net Listening: " << rpc.NetListening() << "\n";
 		std::cout << "Net PeerCount: " << rpc.NetPeerCount() << "\n";
+		std::cout << "ETH ProtocolVersion: " << rpc.EthProtocolVersion() << "\n";
+		std::cout << "ETH Syncing: " << rpc.EthSyncing() << "\n";
 	}catch(std::exception &e){
 		std::cout << e.what();
 	}

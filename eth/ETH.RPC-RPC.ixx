@@ -30,12 +30,28 @@ json::array prepareParams(T... args) {
 }
 
 enum class RPCMethod
-{
+{	
+	//web3 methods
 	web3_clientVersion,
 	web3_sha3,
+
+	//net methods
 	net_version,
 	net_listening,
-	net_peerCount
+	net_peerCount,
+
+	//eth methods
+	eth_protocolVersion,
+	eth_syncing,
+	eth_coinbase,
+	eth_mining,
+	eth_hashrate,
+	eth_gasPrice,
+	eth_accounts,
+	eth_blockNumber,
+	eth_getBalance,
+	eth_getStorageAt,
+	eth_getTransactionCount
 };
 
 export namespace ETH::RPC {
@@ -64,6 +80,12 @@ export namespace ETH::RPC {
 		std::string NetVersion();
 		std::string NetPeerCount();
 
+		//Eth RPC methods
+		std::string EthProtocolVersion();
+		std::string EthSyncing();
+		std::string EthCoinbase();
+		std::string EthMining();
+		std::string EthHashRate();
 
 		BlockInformation GetBlockByHash(std::string);
 
@@ -99,15 +121,51 @@ export namespace ETH::RPC {
 		case RPCMethod::web3_sha3:
 			stringMethod = "web3_sha3";
 			break;
+		case RPCMethod::net_version:
+			stringMethod = "net_version";
+			break;
 		case RPCMethod::net_listening:
 			stringMethod = "net_listening";
 			break;
 		case RPCMethod::net_peerCount:
 			stringMethod = "net_peerCount";
 			break;
-		default:
-			stringMethod = "web3_clientVersion";
+		case RPCMethod::eth_protocolVersion:
+			stringMethod = "eth_protocolVersion";
 			break;
+		case RPCMethod::eth_syncing:
+			stringMethod = "eth_syncing";
+			break;
+		case RPCMethod::eth_coinbase:
+			stringMethod = "eth_coinbase";
+			break;
+		case RPCMethod::eth_mining:
+			stringMethod = "eth_mining";
+			break;
+		case RPCMethod::eth_hashrate:
+			stringMethod = "eth_hashrate";
+			break;
+		case RPCMethod::eth_gasPrice:
+			stringMethod = "eth_gasPrice";
+			break;
+		case RPCMethod::eth_accounts:
+			stringMethod = "eth_accounts";
+			break;
+		case RPCMethod::eth_blockNumber:
+			stringMethod = "eth_blockNumber";
+			break;
+		case RPCMethod::eth_getBalance:
+			stringMethod = "eth_getBalance";
+			break;
+		case RPCMethod::eth_getStorageAt:
+			stringMethod = "eth_getStorageAt";
+			break;
+		case RPCMethod::eth_getTransactionCount:
+			stringMethod = "eth_getTransactionCount";
+			break;
+		default:
+			break;
+
 		}
 		return stringMethod;
 	}
@@ -153,7 +211,7 @@ export namespace ETH::RPC {
 
 	constexpr int RPC::methodId(RPCMethod method)
 	{
-		int id;
+		int id=1;
 		switch (method)
 		{
 		case RPCMethod::web3_clientVersion:
@@ -194,7 +252,6 @@ export namespace ETH::RPC {
 		connectToServer();
 
 		//prepare params
-
 		std::string serealizedBody = prepareBody(RPCMethod::web3_clientVersion);
 
 		return makeRequest(serealizedBody);
@@ -230,6 +287,46 @@ export namespace ETH::RPC {
 		connectToServer();
 
 		std::string serealizedBody = prepareBody(RPCMethod::net_peerCount);
+
+		return makeRequest(serealizedBody);
+	}
+	std::string RPC::EthProtocolVersion()
+	{
+		connectToServer();
+
+		std::string serealizedBody = prepareBody(RPCMethod::eth_protocolVersion);
+
+		return makeRequest(serealizedBody);
+	}
+	std::string RPC::EthSyncing()
+	{
+		connectToServer();
+
+		std::string serealizedBody = prepareBody(RPCMethod::eth_syncing);
+
+		return makeRequest(serealizedBody);
+	}
+	std::string RPC::EthCoinbase()
+	{
+		connectToServer();
+
+		std::string serealizedBody = prepareBody(RPCMethod::eth_coinbase);
+
+		return makeRequest(serealizedBody);
+	}
+	std::string RPC::EthMining()
+	{
+		connectToServer();
+
+		std::string serealizedBody = prepareBody(RPCMethod::eth_mining);
+
+		return makeRequest(serealizedBody);
+	}
+	std::string RPC::EthHashRate()
+	{
+		connectToServer();
+
+		std::string serealizedBody = prepareBody(RPCMethod::eth_hashrate);
 
 		return makeRequest(serealizedBody);
 	}
