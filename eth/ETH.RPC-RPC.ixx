@@ -5,7 +5,6 @@ module;
 #include<boost/asio/connect.hpp>
 #include<boost/asio/ip/tcp.hpp>
 #include<boost/json.hpp>
-#include<iostream>
 #include<utility>
 #include<memory>
 #include<string>
@@ -24,11 +23,38 @@ namespace json = boost::json;
 using tcp = net::ip::tcp;
 using BlockInformation = ETH::Types::BlockInformation;
 
+
+
+enum class TAG {
+	latest,
+	earliest,
+	pending
+};
+
 template<typename ...T>
 json::array prepareParams(T... args) {
 	return json::array{args...};
 }
 
+
+ constexpr std::string TagToString(TAG tag) {
+	std::string result;
+	switch (tag)
+	{
+	case TAG::latest:
+		result = "latest";
+		break;
+	case TAG::earliest:
+		result = "earliest";
+		break;
+	case TAG::pending:
+		result = "pending";
+		break;
+	default:
+		break;
+	}
+	return result;
+}
 enum class RPCMethod
 {	
 	//web3 methods
@@ -64,7 +90,7 @@ export namespace ETH::RPC {
 	json::object prepareJsonBody(RPCMethod,json::array);
 	constexpr std::string methodToString(RPCMethod);
 	std::string makeRequest(std::string);
-	void connectToServer();
+	inline void connectToServer();
 	std::string prepareBody(RPCMethod, json::array);
 	constexpr int methodId(RPCMethod);
 
@@ -86,6 +112,12 @@ export namespace ETH::RPC {
 		std::string EthCoinbase();
 		std::string EthMining();
 		std::string EthHashRate();
+		std::string EthGasPrice();
+		std::string EthAccounts();
+		std::string EthBlockNumber();
+		std::string EthGetBalance(std::string,TAG);
+		std::string EthGetStorageAt(std::string, int, TAG);
+		std::string EthGetTransactionCount(std::string,TAG);
 
 		BlockInformation GetBlockByHash(std::string);
 
@@ -172,6 +204,7 @@ export namespace ETH::RPC {
 
 	std::string RPC::makeRequest(std::string serealizedBody)
 	{
+		connectToServer();
 		http::request<http::string_body> req{ http::verb::post,port,11 };
 		req.target("/");
 		req.set(beast::http::field::content_type, "application/json");
@@ -193,7 +226,7 @@ export namespace ETH::RPC {
 		return res.body();
 	}
 
-	void RPC::connectToServer()
+	inline void RPC::connectToServer()
 	{
 		auto const results = resolver->resolve(ip_address, port);
 
@@ -215,17 +248,34 @@ export namespace ETH::RPC {
 		switch (method)
 		{
 		case RPCMethod::web3_clientVersion:
+		case RPCMethod::eth_syncing:
+		case RPCMethod::eth_accounts:
+		case RPCMethod::eth_getBalance:
+		case RPCMethod::eth_getStorageAt:
+		case RPCMethod::eth_getTransactionCount:
 			id = 1;
 			break;
 		case RPCMethod::web3_sha3:
+		case RPCMethod::eth_coinbase:
 			id = 64;
 			break;
 		case RPCMethod::net_version:
 		case RPCMethod::net_listening:
+		case RPCMethod::eth_protocolVersion:
 			id = 67;
+			break;
+		case RPCMethod::eth_mining:
+		case RPCMethod::eth_hashrate:
+			id = 71;
+			break;
+		case RPCMethod::eth_gasPrice:
+			id = 73;
 			break;
 		case RPCMethod::net_peerCount:
 			id = 74;
+			break;
+		case RPCMethod::eth_blockNumber:
+			id = 83;
 			break;
 		default:
 			break;
@@ -248,9 +298,7 @@ export namespace ETH::RPC {
 
 	std::string RPC::Web3ClientVersion()
 	{
-		//Establish connection to server
-		connectToServer();
-
+		
 		//prepare params
 		std::string serealizedBody = prepareBody(RPCMethod::web3_clientVersion);
 
@@ -258,7 +306,6 @@ export namespace ETH::RPC {
 	}
 	std::string RPC::Web3Sha3(std::string data)
 	{
-		connectToServer();
 
 		json::array params = prepareParams(data);
 
@@ -268,7 +315,6 @@ export namespace ETH::RPC {
 	}
 	std::string RPC::NetListening()
 	{
-		connectToServer();
 
 		std::string serealizedBody = prepareBody(RPCMethod::net_listening);
 
@@ -276,7 +322,6 @@ export namespace ETH::RPC {
 	}
 	std::string RPC::NetVersion()
 	{
-		connectToServer();
 
 		std::string serealizedBody = prepareBody(RPCMethod::net_version);
 
@@ -284,7 +329,6 @@ export namespace ETH::RPC {
 	}
 	std::string RPC::NetPeerCount()
 	{
-		connectToServer();
 
 		std::string serealizedBody = prepareBody(RPCMethod::net_peerCount);
 
@@ -292,7 +336,6 @@ export namespace ETH::RPC {
 	}
 	std::string RPC::EthProtocolVersion()
 	{
-		connectToServer();
 
 		std::string serealizedBody = prepareBody(RPCMethod::eth_protocolVersion);
 
@@ -300,7 +343,6 @@ export namespace ETH::RPC {
 	}
 	std::string RPC::EthSyncing()
 	{
-		connectToServer();
 
 		std::string serealizedBody = prepareBody(RPCMethod::eth_syncing);
 
@@ -308,7 +350,6 @@ export namespace ETH::RPC {
 	}
 	std::string RPC::EthCoinbase()
 	{
-		connectToServer();
 
 		std::string serealizedBody = prepareBody(RPCMethod::eth_coinbase);
 
@@ -316,7 +357,6 @@ export namespace ETH::RPC {
 	}
 	std::string RPC::EthMining()
 	{
-		connectToServer();
 
 		std::string serealizedBody = prepareBody(RPCMethod::eth_mining);
 
@@ -324,9 +364,50 @@ export namespace ETH::RPC {
 	}
 	std::string RPC::EthHashRate()
 	{
-		connectToServer();
 
 		std::string serealizedBody = prepareBody(RPCMethod::eth_hashrate);
+
+		return makeRequest(serealizedBody);
+	}
+	std::string RPC::EthGasPrice()
+	{
+		std::string serealizedBody = prepareBody(RPCMethod::eth_gasPrice);
+
+		return makeRequest(serealizedBody);
+	}
+	std::string RPC::EthAccounts()
+	{
+		std::string serealizedBody = prepareBody(RPCMethod::eth_accounts);
+
+		return makeRequest(serealizedBody);
+	}
+	std::string RPC::EthBlockNumber()
+	{
+		std::string serealizedBody = prepareBody(RPCMethod::eth_blockNumber);
+
+		return makeRequest(serealizedBody);
+	}
+	std::string RPC::EthGetBalance(std::string address,TAG tag=TAG::latest)
+	{
+		auto params = prepareParams(address, TagToString(tag));
+
+		std::string serealizedBody = prepareBody(RPCMethod::eth_getBalance, params);
+
+		return makeRequest(serealizedBody);
+	}
+	std::string RPC::EthGetStorageAt(std::string data, int quantity, TAG tag=TAG::latest)
+	{
+		auto params = prepareParams(data, quantity, TagToString(tag));
+
+		auto serealizedBody = prepareBody(RPCMethod::eth_getStorageAt, params);
+
+		return makeRequest(serealizedBody);
+	}
+	std::string RPC::EthGetTransactionCount(std::string data, TAG tag = TAG::latest)
+	{
+		auto params = prepareParams(data, TagToString(tag));
+
+		auto serealizedBody = prepareBody(RPCMethod::eth_getTransactionCount,params);
 
 		return makeRequest(serealizedBody);
 	}
