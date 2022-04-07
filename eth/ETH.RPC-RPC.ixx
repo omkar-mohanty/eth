@@ -118,8 +118,10 @@ export namespace ETH::RPC {
 		std::string EthGetBalance(std::string,TAG);
 		std::string EthGetStorageAt(std::string, int, TAG);
 		std::string EthGetTransactionCount(std::string,TAG);
+		int EthGetBlockTransactionCountByHash(std::string);
+		int EthGetBlockTransactionCountByNumber(unsigned long long);
+		BlockInformation EthGetBlockByHash(std::string);
 
-		BlockInformation GetBlockByHash(std::string);
 
 		~RPC() {}
 	private:
@@ -223,7 +225,7 @@ export namespace ETH::RPC {
 		// Receive the HTTP response
 		http::read(*stream.get(), buffer, res);
 
-		return res.body();
+		return std::move(res.body());
 	}
 
 	inline void RPC::connectToServer()
@@ -239,7 +241,7 @@ export namespace ETH::RPC {
 	{
 		//get json body
 		json::object jsonBody = prepareJsonBody(method, params);
-		return json::serialize(jsonBody);
+		return std::move(json::serialize(jsonBody));
 	}
 
 	constexpr int RPC::methodId(RPCMethod method)
@@ -291,10 +293,6 @@ export namespace ETH::RPC {
 		resolver = std::make_unique<tcp::resolver>(io_context);
 	}
 
-	BlockInformation RPC::GetBlockByHash(std::string hash)
-	{
-		return BlockInformation();
-	}
 
 	std::string RPC::Web3ClientVersion()
 	{
@@ -411,5 +409,6 @@ export namespace ETH::RPC {
 
 		return makeRequest(serealizedBody);
 	}
+	
 }
 
